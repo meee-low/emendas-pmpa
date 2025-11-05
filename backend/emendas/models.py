@@ -38,8 +38,8 @@ class PropostaDeEmenda(models.Model):
         return self.titulo
 
     class Meta:
-        verbose_name = "Proposta de Emenda do Ciclo"
-        verbose_name_plural = "Propostas de Emendas do Ciclo"
+        verbose_name = "Proposta de Emenda"
+        verbose_name_plural = "Propostas de Emendas"
 
 
 class PropostaDeEmendaDoCiclo(models.Model):
