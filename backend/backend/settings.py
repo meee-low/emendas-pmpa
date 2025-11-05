@@ -31,7 +31,13 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    # my apps:
     "emendas",
+    # django extensions:
+    "django_browser_reload",
+    "data_browser",
+    "debug_toolbar",
+    # django built-ins:
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -41,6 +47,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "django_browser_reload.middleware.BrowserReloadMiddleware", # The middleware should be listed after any others that encode the response, such as Django’s GZipMiddleware. (https://github.com/adamchainz/django-browser-reload/blob/main/README.rst) 
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
