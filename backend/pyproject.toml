@@ -5,11 +5,12 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "django>=5.2",                   # TODO Update para django 6.0 em dezembro/2025
+    "django>=5.2", # TODO Update para django 6.0 em dezembro/2025
     "django-browser-reload>=1.21.0",
     "django-data-browser>=4.2.10",
     "django-debug-toolbar>=6.1.0",
     # "django-template-partials>=25.2", # https://github.com/carltongibson/django-template-partials/blob/main/Migration.md
+    "django-sqids>=0.2.2",
 ]
 
 [dependency-groups]

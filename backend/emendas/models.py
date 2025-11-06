@@ -1,9 +1,14 @@
 from django.db import models
+from django.template.defaultfilters import slugify
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
+
+from django_sqids import SqidsField, shuffle_alphabet
+
+import uuid
+
 import typing
-from typing import Self
-from decimal import Decimal
+from typing import Self, override
 
 if typing.TYPE_CHECKING:
     from django.db.models import ForeignKey, ManyToManyField
@@ -22,20 +27,37 @@ class Ciclo(models.Model):
     ativo = models.BooleanField()
     criado_em = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self) -> str:
+        return self.nome
+
 
 class PropostaDeEmenda(models.Model):
+    _SLUG_LEN = 50
+    sqid = SqidsField(alphabet=shuffle_alphabet(seed="PropostaDeEmenda"))
     titulo = models.CharField(max_length=200, unique=True, verbose_name="Título")
+    slug = models.SlugField(
+        max_length=_SLUG_LEN, unique=True, blank=True, editable=False
+    )
     descricao = models.TextField(verbose_name="Descrição")
-    valor = models.DecimalField(max_digits=12, decimal_places=2)
+    valor = models.PositiveIntegerField()
     ativo = models.BooleanField(default=True)
     tags: "ManyToManyField[Tag, Self]" = models.ManyToManyField(
         "Tag", blank=True, related_name="emendas"
     )
-    data_criacao = models.DateTimeField(auto_now_add=True, verbose_name="Data de Criação")
-    data_atualizacao = models.DateTimeField(auto_now=True, verbose_name="Data de Atualização")
+    data_criacao = models.DateTimeField(
+        auto_now_add=True, verbose_name="Data de Criação"
+    )
+    data_atualizacao = models.DateTimeField(
+        auto_now=True, verbose_name="Data de Atualização"
+    )
 
     def __str__(self):
         return self.titulo
+
+    @override
+    def save(self, *args, **kwargs):  # pyright: ignore[reportMissingParameterType, reportUnknownParameterType]
+        self.slug = slugify(f"{self.sqid}-{slugify(self.titulo)}")[: self._SLUG_LEN]
+        super().save(*args, **kwargs)  # pyright: ignore[reportUnknownArgumentType]
 
     class Meta:
         verbose_name = "Proposta de Emenda"
@@ -43,18 +65,24 @@ class PropostaDeEmenda(models.Model):
 
 
 class PropostaDeEmendaDoCiclo(models.Model):
+    sqid = SqidsField(alphabet=shuffle_alphabet(seed="PropostaDeEmendaDoCiclo"))
     proposta_de_emenda = models.ForeignKey(PropostaDeEmenda, on_delete=models.CASCADE)
+    proposta_de_emenda_id: int
     ciclo = models.ForeignKey(Ciclo, on_delete=models.CASCADE)
     ciclo_id: int
 
-    def total_ja_investido(self) -> Decimal:
-        total = Decimal(
+    def total_ja_investido(self) -> int:
+        total = int(
             Transacao.objects.filter(emenda=self, ciclo_id=self.ciclo_id).aggregate(
                 models.Sum("valor_investido")
             )["valor_investido__sum"]
             or 0
         )
+
         return total
+
+    def __str__(self) -> str:
+        return f"Emenda {self.proposta_de_emenda_id} ({self.ciclo})"
 
     class Meta:
         verbose_name = "Proposta de Emenda do Ciclo"
@@ -68,32 +96,38 @@ class ParlamentarDoCiclo(models.Model):
     )
     ciclo = models.ForeignKey(Ciclo, on_delete=models.CASCADE)
     ciclo_id: int
-    verba_inicial = models.DecimalField(max_digits=12, decimal_places=2)
+    verba_inicial = models.PositiveIntegerField()
 
     def __str__(self):
         return f"{self.usuario} ({self.ciclo})"
 
-    def saldo_verba(self) -> Decimal:
-        total_investido = Decimal(
+    def saldo_verba(self) -> int:
+        total_investido = int(
             Transacao.objects.filter(
                 parlamentar=self, ciclo_id=self.ciclo_id
             ).aggregate(models.Sum("valor_investido"))["valor_investido__sum"]
             or 0
         )
-        return self.verba_inicial - total_investido
+        # TODO: garantir que o saldo não esteja negativo
+        saldo = self.verba_inicial - total_investido
+        assert saldo >= 0
+        return saldo
 
     class Meta:
+        verbose_name = "Parlamentar do Ciclo"
         verbose_name_plural = "Parlamentares do Ciclo"
+        unique_together = ["ciclo", "usuario"]
 
 
 class Transacao(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     emenda = models.ForeignKey(PropostaDeEmendaDoCiclo, on_delete=models.PROTECT)
     emenda_id: int
     parlamentar = models.ForeignKey(ParlamentarDoCiclo, on_delete=models.PROTECT)
     parlamentar_id: int
     ciclo = models.ForeignKey(Ciclo, on_delete=models.PROTECT)
     ciclo_id: int
-    valor_investido = models.DecimalField(max_digits=12, decimal_places=2)
+    valor_investido = models.IntegerField()  # Pode ser negativo
     tipo = models.CharField(max_length=20, blank=False)
     obs = models.TextField(blank=True, verbose_name="Observação")
     timestamp = models.DateTimeField(auto_now_add=True)
@@ -116,8 +150,9 @@ class Transacao(models.Model):
 
 
 class Tag(models.Model):
+    sqid = SqidsField()
     nome = models.CharField(
-        max_length=100, unique=True, validators=[validador_alfanumerico]
+        max_length=100, validators=[validador_alfanumerico]
     )
     pai: "ForeignKey[Self | None]" = typing.cast(
         models.ForeignKey[Self | None],
@@ -130,7 +165,8 @@ class Tag(models.Model):
         ),
     )
 
-    def hierarquia(self) -> str:
+    def _debug_hierarquia(self) -> str:
+        # WARN: Problema de N+1, use com cautela, apenas para debug. No futuro, implementar isso de um jeito melhor
         cur = self
         s = f"{cur.nome}"
         while cur.pai is not None:

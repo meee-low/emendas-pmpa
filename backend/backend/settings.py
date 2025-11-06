@@ -27,6 +27,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+INTERNAL_IPS = ["127.0.0.1", "localhost"]
+
 
 # Application definition
 
@@ -37,6 +39,7 @@ INSTALLED_APPS = [
     "django_browser_reload",
     "data_browser",
     "debug_toolbar",
+
     # django built-ins:
     "django.contrib.admin",
     "django.contrib.auth",
@@ -48,6 +51,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django_browser_reload.middleware.BrowserReloadMiddleware", # The middleware should be listed after any others that encode the response, such as Django’s GZipMiddleware. (https://github.com/adamchainz/django-browser-reload/blob/main/README.rst) 
+    "debug_toolbar.middleware.DebugToolbarMiddleware", # The order of MIDDLEWARE is important. You should include the Debug Toolbar middleware as early as possible in the list. However, it must come after any other middleware that encodes the response’s content, such as GZipMiddleware. (https://django-debug-toolbar.readthedocs.io/en/latest/installation.html)
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -128,3 +132,9 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# SQIDS
+# https://github.com/julianwachholz/django-sqids
+
+DJANGO_SQIDS_MIN_LENGTH = 6

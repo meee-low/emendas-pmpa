@@ -19,6 +19,7 @@ dependencies = [
     { name = "django-browser-reload" },
     { name = "django-data-browser" },
     { name = "django-debug-toolbar" },
+    { name = "django-sqids" },
 ]
 
 [package.dev-dependencies]
@@ -36,6 +37,7 @@ requires-dist = [
     { name = "django-browser-reload", specifier = ">=1.21.0" },
     { name = "django-data-browser", specifier = ">=4.2.10" },
     { name = "django-debug-toolbar", specifier = ">=6.1.0" },
+    { name = "django-sqids", specifier = ">=0.2.2" },
 ]
 
 [package.metadata.requires-dev]
@@ -104,6 +106,17 @@ dependencies = [
 ]
 wheels = [
     { path = "django_debug_toolbar-6.1.0-py3-none-any.whl" },
+]
+
+[[package]]
+name = "django-sqids"
+version = "0.2.2"
+source = { registry = "../../../../Downloads/python-wheels" }
+dependencies = [
+    { name = "sqids" },
+]
+wheels = [
+    { path = "django_sqids-0.2.2-py3-none-any.whl" },
 ]
 
 [[package]]
@@ -248,6 +261,14 @@ version = "1.17.0"
 source = { registry = "../../../../Downloads/python-wheels" }
 wheels = [
     { path = "six-1.17.0-py2.py3-none-any.whl" },
+]
+
+[[package]]
+name = "sqids"
+version = "0.5.2"
+source = { registry = "../../../../Downloads/python-wheels" }
+wheels = [
+    { path = "sqids-0.5.2-py3-none-any.whl" },
 ]
 
 [[package]]
