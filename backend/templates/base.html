@@ -19,6 +19,10 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- TODO: Remover e implementar tailwind real -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/forms@0.5.10/src/index.min.js"></script>
+    <!-- TODO: Remover e implementar tailwindforms real -->
     <link rel="shortcut icon" href={% static 'favicon.ico' %}
     type="image/x-icon">
   </head>
@@ -28,6 +32,11 @@
   >
     <header class="bg-sky-950 px-4 py-2 w-full overflow-hidden text-white">
       <a href="#main" class="sr-only">Pular para o conteúdo principal</a>
+      <nav>
+        <ul>
+          <li><a href="{% url 'catalogo_de_emendas_do_ciclo' 1 %}">Catálogo de Emendas</a></li>
+        </ul>
+      </nav>
     </header>
     <div class="flex flex-row flex-1">
       <main

@@ -39,19 +39,21 @@ INSTALLED_APPS = [
     "django_browser_reload",
     "data_browser",
     "debug_toolbar",
-
+    "hijack",
     # django built-ins:
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
+    "django.contrib.humanize",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "hijack.contrib.admin",
 ]
 
 MIDDLEWARE = [
-    "django_browser_reload.middleware.BrowserReloadMiddleware", # The middleware should be listed after any others that encode the response, such as Django’s GZipMiddleware. (https://github.com/adamchainz/django-browser-reload/blob/main/README.rst) 
-    "debug_toolbar.middleware.DebugToolbarMiddleware", # The order of MIDDLEWARE is important. You should include the Debug Toolbar middleware as early as possible in the list. However, it must come after any other middleware that encodes the response’s content, such as GZipMiddleware. (https://django-debug-toolbar.readthedocs.io/en/latest/installation.html)
+    "django_browser_reload.middleware.BrowserReloadMiddleware",  # The middleware should be listed after any others that encode the response, such as Django’s GZipMiddleware. (https://github.com/adamchainz/django-browser-reload/blob/main/README.rst)
+    "debug_toolbar.middleware.DebugToolbarMiddleware",  # The order of MIDDLEWARE is important. You should include the Debug Toolbar middleware as early as possible in the list. However, it must come after any other middleware that encodes the response’s content, such as GZipMiddleware. (https://django-debug-toolbar.readthedocs.io/en/latest/installation.html)
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -59,6 +61,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "hijack.middleware.HijackUserMiddleware",
 ]
 
 ROOT_URLCONF = "backend.urls"
@@ -66,7 +69,7 @@ ROOT_URLCONF = "backend.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -114,7 +117,12 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
+USE_L10N = True
 LANGUAGE_CODE = "pt-BR"
+
+# DECIMAL_SEPARATOR = ","
+# THOUSAND_SEPARATOR = "."
+# USE_THOUSAND_SEPARATOR = True
 
 TIME_ZONE = "America/Sao_Paulo"
 
@@ -127,6 +135,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+
+STATICFILES_DIRS = [BASE_DIR / "static"]
+
+STATIC_ROOT = "static_root/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

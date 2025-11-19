@@ -72,10 +72,13 @@ class PropostaDeEmendaDoCiclo(models.Model):
     ciclo_id: int
 
     def total_ja_investido(self) -> int:
+        if hasattr(self, "total_investido"):
+            return self.total_investido or 0  # type: ignore
+
         total = int(
             Transacao.objects.filter(emenda=self, ciclo_id=self.ciclo_id).aggregate(
-                models.Sum("valor_investido")
-            )["valor_investido__sum"]
+                total=models.Sum("valor_investido")
+            )["total"]
             or 0
         )
 
@@ -121,11 +124,17 @@ class ParlamentarDoCiclo(models.Model):
 
 class Transacao(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    emenda = models.ForeignKey(PropostaDeEmendaDoCiclo, on_delete=models.PROTECT)
+    emenda = models.ForeignKey(
+        PropostaDeEmendaDoCiclo, on_delete=models.PROTECT, related_name="transacoes"
+    )
     emenda_id: int
-    parlamentar = models.ForeignKey(ParlamentarDoCiclo, on_delete=models.PROTECT)
+    parlamentar = models.ForeignKey(
+        ParlamentarDoCiclo, on_delete=models.PROTECT, related_name="transacoes"
+    )
     parlamentar_id: int
-    ciclo = models.ForeignKey(Ciclo, on_delete=models.PROTECT)
+    ciclo = models.ForeignKey(
+        Ciclo, on_delete=models.PROTECT, related_name="transacoes"
+    )
     ciclo_id: int
     valor_investido = models.IntegerField()  # Pode ser negativo
     tipo = models.CharField(max_length=20, blank=False)
@@ -151,9 +160,7 @@ class Transacao(models.Model):
 
 class Tag(models.Model):
     sqid = SqidsField()
-    nome = models.CharField(
-        max_length=100, validators=[validador_alfanumerico]
-    )
+    nome = models.CharField(max_length=100, validators=[validador_alfanumerico])
     pai: "ForeignKey[Self | None]" = typing.cast(
         models.ForeignKey[Self | None],
         models.ForeignKey(

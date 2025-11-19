@@ -10,8 +10,16 @@ dependencies = [
     "django-data-browser>=4.2.10",
     "django-debug-toolbar>=6.1.0",
     # "django-template-partials>=25.2", # https://github.com/carltongibson/django-template-partials/blob/main/Migration.md
+    "django-hijack>=3.7.4",
     "django-sqids>=0.2.2",
 ]
 
 [dependency-groups]
-dev = ["django-types", "mypy", "faker", "pytest", "ruff"]
+dev = [
+    "django-types",
+    "mypy",
+    "faker",
+    "pytest",
+    "ruff",
+    "djlint>=1.36.4",
+]

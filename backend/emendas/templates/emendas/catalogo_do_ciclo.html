@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% load num_br math_filters %}
+{% block content %}
+  <h1 class="text-3xl font-bold mb-6">Emendas do Ciclo</h1>
+  <div class="grid grid-cols-2">
+    {% comment %} Sidebar {% endcomment %}
+    <div>
+      <h2>Filtros</h2>
+      <form hx-boost="true"
+            {% comment %}
+            hx-trigger="change"
+            {% endcomment %}
+            action=""
+            method="get"
+            class="space-y-2">
+        <label class="block">
+          Ordenar por:
+          <select name="ordem">
+            <option value="custo">Custo total</option>
+            <option value="investido">Quantia já investida</option>
+          </select>
+        </label>
+        <label class="block">
+          Tags:
+          <select name="tags" multiple="true">
+            {% for tag_id, tag_nome in tags.items %}<option value="{{ tag_id }}">{{ tag_nome }}</option>{% endfor %}
+          </select>
+        </label>
+        <label>Ocultar financiados<input type="checkbox" name="ocultar-financiados"></label>
+      </form>
+    </div>
+    {% if emendas %}
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for item in emendas %}
+          {% with emenda=item.proposta_de_emenda %}
+            <div class="bg-white shadow-lg rounded-xl p-6 border border-gray-200 hover:shadow-xl transition">
+              <!-- Título -->
+              <h2 class="text-xl font-semibold text-gray-900 mb-2">{{ emenda.titulo }}</h2>
+              <!-- Descrição curta -->
+              <p class="text-gray-600 text-sm line-clamp-3 mb-4">{{ emenda.descricao }}</p>
+              <!-- Valores -->
+              <div class="mb-4">
+                <p class="text-gray-800">
+                  <span class="font-medium">Valor Total:</span>
+                  R$ {{ emenda.valor|num_br:2 }}
+                </p>
+                <p class="text-gray-800">
+                  <span class="font-medium">Já investido:</span>
+                  R$ {{ item.total_investido|num_br:2 }}
+                </p>
+                {% with total=emenda.valor invested=item.total_investido %}
+                  {% with percent=invested|div:total|mul:100 %}
+                    <!-- Texto do progresso -->
+                    <p class="text-sm text-gray-600 mt-1">{{ percent|floatformat:0 }}% financiado</p>
+                    <!-- Progress bar container -->
+                    <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden mt-1">
+                      {% if percent >= 100 %}
+                        <!-- COMPLETO -->
+                        <div class="h-full bg-green-600" style="width: 100%"></div>
+                      {% else %}
+                        <!-- PARCIAL -->
+                        <div class="h-full bg-blue-500"
+                             style="width: {{ percent|to_float_point }}%"></div>
+                      {% endif %}
+                    </div>
+                  {% endwith %}
+                {% endwith %}
+              </div>
+              <!-- Tags -->
+              <div class="mb-4">
+                <div class="flex flex-wrap gap-2 mt-1">
+                  {% for tag in emenda.tags.all %}
+                    <span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded">{{ tag.nome }}</span>
+                  {% empty %}
+                    <span class="text-gray-500 text-sm">Sem tags</span>
+                  {% endfor %}
+                </div>
+              </div>
+              <!-- Info adicional -->
+              {% if request.user.is_superuser %}
+                <div class="text-xs text-gray-500 mb-4">
+                  <p>
+                    <strong>SQID:</strong> {{ item.sqid }}
+                  </p>
+                  <p>
+                    <strong>Slug:</strong> {{ emenda.slug }}
+                  </p>
+                </div>
+              {% endif %}
+              <!-- Botão (opcional) -->
+              <div>
+                <form action="" method="post">
+                  {% csrf_token %}
+                  <label for="">
+                    Investir (R$):
+                    <input type="number" min="1" max="{{ inv }}">
+                  </label>
+                  <button type="submit">Confirmar</button>
+                </form>
+              </div>
+              {% comment %} <a href="#" class="inline-block w-full text-center bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">
+                Ver detalhes
+              </a> {% endcomment %}
+            </div>
+          {% endwith %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-gray-500 mt-6">Nenhuma emenda encontrada.</p>
+    {% endif %}
+  </div>
+{% endblock content %}

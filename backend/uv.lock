@@ -19,12 +19,14 @@ dependencies = [
     { name = "django-browser-reload" },
     { name = "django-data-browser" },
     { name = "django-debug-toolbar" },
+    { name = "django-hijack" },
     { name = "django-sqids" },
 ]
 
 [package.dev-dependencies]
 dev = [
     { name = "django-types" },
+    { name = "djlint" },
     { name = "faker" },
     { name = "mypy" },
     { name = "pytest" },
@@ -37,16 +39,29 @@ requires-dist = [
     { name = "django-browser-reload", specifier = ">=1.21.0" },
     { name = "django-data-browser", specifier = ">=4.2.10" },
     { name = "django-debug-toolbar", specifier = ">=6.1.0" },
+    { name = "django-hijack", specifier = ">=3.7.4" },
     { name = "django-sqids", specifier = ">=0.2.2" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "django-types" },
+    { name = "djlint", specifier = ">=1.36.4" },
     { name = "faker" },
     { name = "mypy" },
     { name = "pytest" },
     { name = "ruff" },
+]
+
+[[package]]
+name = "click"
+version = "8.3.0"
+source = { registry = "../../../../Downloads/python-wheels" }
+dependencies = [
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+]
+wheels = [
+    { path = "click-8.3.0-py3-none-any.whl" },
 ]
 
 [[package]]
@@ -55,6 +70,19 @@ version = "0.4.6"
 source = { registry = "../../../../Downloads/python-wheels" }
 wheels = [
     { path = "colorama-0.4.6-py2.py3-none-any.whl" },
+]
+
+[[package]]
+name = "cssbeautifier"
+version = "1.15.4"
+source = { registry = "../../../../Downloads/python-wheels" }
+dependencies = [
+    { name = "editorconfig" },
+    { name = "jsbeautifier" },
+    { name = "six" },
+]
+wheels = [
+    { path = "cssbeautifier-1.15.4-py3-none-any.whl" },
 ]
 
 [[package]]
@@ -109,6 +137,17 @@ wheels = [
 ]
 
 [[package]]
+name = "django-hijack"
+version = "3.7.4"
+source = { registry = "../../../../Downloads/python-wheels" }
+dependencies = [
+    { name = "django" },
+]
+wheels = [
+    { path = "django_hijack-3.7.4-py3-none-any.whl" },
+]
+
+[[package]]
 name = "django-sqids"
 version = "0.2.2"
 source = { registry = "../../../../Downloads/python-wheels" }
@@ -128,6 +167,33 @@ dependencies = [
 ]
 wheels = [
     { path = "django_types-0.22.0-py3-none-any.whl" },
+]
+
+[[package]]
+name = "djlint"
+version = "1.36.4"
+source = { registry = "../../../../Downloads/python-wheels" }
+dependencies = [
+    { name = "click" },
+    { name = "colorama" },
+    { name = "cssbeautifier" },
+    { name = "jsbeautifier" },
+    { name = "json5" },
+    { name = "pathspec" },
+    { name = "pyyaml" },
+    { name = "regex" },
+    { name = "tqdm" },
+]
+wheels = [
+    { path = "djlint-1.36.4-cp313-cp313-win_amd64.whl" },
+]
+
+[[package]]
+name = "editorconfig"
+version = "0.17.1"
+source = { registry = "../../../../Downloads/python-wheels" }
+wheels = [
+    { path = "editorconfig-0.17.1-py3-none-any.whl" },
 ]
 
 [[package]]
@@ -166,6 +232,26 @@ version = "2.3.0"
 source = { registry = "../../../../Downloads/python-wheels" }
 wheels = [
     { path = "iniconfig-2.3.0-py3-none-any.whl" },
+]
+
+[[package]]
+name = "jsbeautifier"
+version = "1.15.4"
+source = { registry = "../../../../Downloads/python-wheels" }
+dependencies = [
+    { name = "editorconfig" },
+    { name = "six" },
+]
+wheels = [
+    { path = "jsbeautifier-1.15.4-py3-none-any.whl" },
+]
+
+[[package]]
+name = "json5"
+version = "0.12.1"
+source = { registry = "../../../../Downloads/python-wheels" }
+wheels = [
+    { path = "json5-0.12.1-py3-none-any.whl" },
 ]
 
 [[package]]
@@ -248,6 +334,24 @@ wheels = [
 ]
 
 [[package]]
+name = "pyyaml"
+version = "6.0.3"
+source = { registry = "../../../../Downloads/python-wheels" }
+wheels = [
+    { path = "pyyaml-6.0.3-cp313-cp313-win_amd64.whl" },
+]
+
+[[package]]
+name = "regex"
+version = "2025.11.3"
+source = { registry = "../../../../Downloads/python-wheels" }
+sdist = { path = "regex-2025.11.3.tar.gz" }
+wheels = [
+    { path = "regex-2025.11.3-cp313-cp313-win_amd64.whl" },
+    { path = "regex-2025.11.3-cp313-cp313t-win32.whl" },
+]
+
+[[package]]
 name = "ruff"
 version = "0.14.3"
 source = { registry = "../../../../Downloads/python-wheels" }
@@ -277,6 +381,17 @@ version = "0.5.3"
 source = { registry = "../../../../Downloads/python-wheels" }
 wheels = [
     { path = "sqlparse-0.5.3-py3-none-any.whl" },
+]
+
+[[package]]
+name = "tqdm"
+version = "4.67.1"
+source = { registry = "../../../../Downloads/python-wheels" }
+dependencies = [
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+]
+wheels = [
+    { path = "tqdm-4.67.1-py3-none-any.whl" },
 ]
 
 [[package]]
