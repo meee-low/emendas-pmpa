@@ -26,7 +26,10 @@
             {% for tag_id, tag_nome in tags.items %}<option value="{{ tag_id }}">{{ tag_nome }}</option>{% endfor %}
           </select>
         </label>
-        <label>Ocultar financiados<input type="checkbox" name="ocultar-financiados"></label>
+        <label>
+          Ocultar financiados
+          <input type="checkbox" name="ocultar-financiados">
+        </label>
       </form>
     </div>
     {% if emendas %}
@@ -63,44 +66,46 @@
                              style="width: {{ percent|to_float_point }}%"></div>
                       {% endif %}
                     </div>
+                  </div>
+                  <!-- Tags -->
+                  <div class="mb-4">
+                    <div class="flex flex-wrap gap-2 mt-1">
+                      {% for tag in emenda.tags.all %}
+                        <span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded">{{ tag.nome }}</span>
+                      {% empty %}
+                        <span class="text-gray-500 text-sm">Sem tags</span>
+                      {% endfor %}
+                    </div>
+                  </div>
+                  <!-- Info adicional -->
+                  {% if request.user.is_superuser %}
+                    <div class="text-xs text-gray-500 mb-4">
+                      <p>
+                        <strong>SQID:</strong> {{ item.sqid }}
+                      </p>
+                      <p>
+                        <strong>Slug:</strong> {{ emenda.slug }}
+                      </p>
+                    </div>
+                  {% endif %}
+                  {% if "Parlamentar" in grupos_do_usuario %}
+                    <div>
+                      <form action="" method="post">
+                        {% csrf_token %}
+                        <label for="">
+                          Investir (R$):
+                          <input type="number" min="1" max="{{ total|minus:invested }}">
+                        </label>
+                        <button type="submit">Confirmar</button>
+                      </form>
+                    </div>
+                    {% endif %}
                   {% endwith %}
                 {% endwith %}
-              </div>
-              <!-- Tags -->
-              <div class="mb-4">
-                <div class="flex flex-wrap gap-2 mt-1">
-                  {% for tag in emenda.tags.all %}
-                    <span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded">{{ tag.nome }}</span>
-                  {% empty %}
-                    <span class="text-gray-500 text-sm">Sem tags</span>
-                  {% endfor %}
-                </div>
-              </div>
-              <!-- Info adicional -->
-              {% if request.user.is_superuser %}
-                <div class="text-xs text-gray-500 mb-4">
-                  <p>
-                    <strong>SQID:</strong> {{ item.sqid }}
-                  </p>
-                  <p>
-                    <strong>Slug:</strong> {{ emenda.slug }}
-                  </p>
-                </div>
-              {% endif %}
-              <!-- Botão (opcional) -->
-              <div>
-                <form action="" method="post">
-                  {% csrf_token %}
-                  <label for="">
-                    Investir (R$):
-                    <input type="number" min="1" max="{{ inv }}">
-                  </label>
-                  <button type="submit">Confirmar</button>
-                </form>
-              </div>
-              {% comment %} <a href="#" class="inline-block w-full text-center bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">
+              <a href="#"
+                 class="inline-block w-full text-center bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">
                 Ver detalhes
-              </a> {% endcomment %}
+              </a>
             </div>
           {% endwith %}
         {% endfor %}
