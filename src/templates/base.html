@@ -5,48 +5,69 @@
     <meta charset="UTF-8" />
     <meta name="description" content="O Portal Leela." />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{% block title %}Emendas SMS-PA{% endblock %}</title>
+    <title>
+      {% block title %}Emendas SMS-PA{% endblock %}
+    </title>
     <link rel="stylesheet" href={% static 'css/style.css' %}>
-    <script
-      src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js"
-      integrity="sha384-/TgkGk7p307TH7EXJDuUlgG3Ce1UVolAOFopFekQkkXihi5u/6OCvVKyz1W+idaz"
-      crossorigin="anonymous"
-    ></script>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-      integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    />
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js"
+            integrity="sha384-/TgkGk7p307TH7EXJDuUlgG3Ce1UVolAOFopFekQkkXihi5u/6OCvVKyz1W+idaz"
+            crossorigin="anonymous"></script>
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+          integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer" />
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- TODO: Remover e implementar tailwind real -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/forms@0.5.10/src/index.min.js"></script>
     <!-- TODO: Remover e implementar tailwindforms real -->
-    <link rel="shortcut icon" href={% static 'favicon.ico' %}
-    type="image/x-icon">
+    <link rel="shortcut icon"
+          href="{% static 'favicon.ico' %}"
+          type="image/x-icon">
   </head>
-
-  <body
-    class="flex flex-col bg-yellow-50 w-full min-h-screen overflow-x-hidden"
-  >
+  <body class="flex flex-col bg-yellow-50 w-full min-h-screen overflow-x-hidden">
     <header class="bg-sky-950 px-4 py-2 w-full overflow-hidden text-white">
       <a href="#main" class="sr-only">Pular para o conteúdo principal</a>
-      <nav>
-        <ul>
-          <li><a href="{% url 'catalogo_de_emendas_do_ciclo' 1 %}">Catálogo de Emendas</a></li>
-        </ul>
-      </nav>
+      <div>
+        <h1>Emendas SMS-PA</h1>
+      </div>
+      <div class="flex justify-between">
+        <nav>
+          <ul class="flex gap-4 items-center">
+            <li>
+              <a href="{% url 'home' %}">
+                <div class="fa-solid fa-house">
+                  <span class="sr-only">Home</span>
+                </div>
+              </a>
+            </li>
+            <li>
+              <a class="hover:underline" href="{% url 'catalogos' %}">Catálogo de Emendas</a>
+            </li>
+          </ul>
+        </nav>
+        <div>
+          {% if user.is_authenticated %}
+            <p>{{ user.username }}</p>
+            <form action="{% url "logout" %}" method="post">
+              {% csrf_token %}
+              <button type="submit">Sair</button>
+            </form>
+          {% else %}
+            <a class="hover:underline" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">Login</a>
+          {% endif %}
+        </div>
+      </div>
     </header>
     <div class="flex flex-row flex-1">
-      <main
-        class="bg-white md:m-6 p-4 md:p-6 w-full overflow-x-hidden overflow-y-auto"
-        id="main"
-      >
+      <main class="bg-white md:m-6 p-4 md:p-6 w-full overflow-x-hidden overflow-y-auto"
+            id="main">
         {% block content %}{% endblock %}
       </main>
     </div>
-    <footer>{% block footer %}{% endblock %}</footer>
+    <footer>
+      {% block footer %}{% endblock %}
+    </footer>
     <script>
       document.body.addEventListener("htmx:configRequest", function (evt) {
         evt.detail.headers["X-CSRFToken"] = "{{ csrf_token }}";
@@ -65,6 +86,7 @@
         }
       });
     </script>
-    {% block scripts %}{% endblock %}
+    {% block scripts %}
+    {% endblock %}
   </body>
 </html>

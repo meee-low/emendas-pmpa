@@ -21,6 +21,7 @@ validador_alfanumerico = RegexValidator(
 
 
 class Ciclo(models.Model):
+    id: int
     nome = models.CharField(max_length=20, unique=True)
     data_comeco = models.DateField(verbose_name="Data do Começo")
     data_fim = models.DateField(verbose_name="Data do Fim")

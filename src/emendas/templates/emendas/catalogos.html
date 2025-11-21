@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+  <div>
+    {% if ciclos_ativos %}
+      <ol>
+        {% for ciclo in ciclos_ativos %}
+          <li>
+            <a class="hover:underline"
+               href="{% url "catalogo_de_emendas_do_ciclo" ciclo.nome %}">
+              {{ ciclo.nome }} ({{ ciclo.data_comeco|date:"d/M/Y" }} - {{ ciclo.data_fim|date:"d/M/Y" }})
+            </a>
+          </li>
+        {% endfor %}
+      </ol>
+    {% endif %}
+  </div>
+  {% if outros_ciclos %}
+    <div>
+      <ol>
+        {% for ciclo in outros_ciclos %}
+          <li>
+            <a class="hover:underline"
+               href="{% url "catalogo_de_emendas_do_ciclo" ciclo.nome %}">
+              {{ ciclo.nome }} ({{ ciclo.data_comeco|date:"d/M/Y" }} - {{ ciclo.data_fim|date:"d/M/Y" }})
+            </a>
+          </li>
+        {% endfor %}
+      </ol>
+    </div>
+  {% endif %}
+{% endblock content %}

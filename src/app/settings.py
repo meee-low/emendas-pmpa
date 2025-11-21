@@ -150,3 +150,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # https://github.com/julianwachholz/django-sqids
 
 DJANGO_SQIDS_MIN_LENGTH = 6
+
+
+LOGIN_REDIRECT_URL = "/"

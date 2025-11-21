@@ -1,6 +1,6 @@
 from django.urls import path, include
 
-from .views import catalogo_de_emendas, home_page
+from .views import catalogo_de_emendas, home_page, catalogos
 
 urlpatterns = [
     path("", home_page, name="home"),
@@ -9,4 +9,5 @@ urlpatterns = [
         catalogo_de_emendas,
         name="catalogo_de_emendas_do_ciclo",
     ),
+    path("emendas/catalogo/", catalogos, name="catalogos"),
 ]

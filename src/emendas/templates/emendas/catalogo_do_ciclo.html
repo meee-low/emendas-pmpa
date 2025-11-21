@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load num_br math_filters %}
 {% block content %}
-  <h1 class="text-3xl font-bold mb-6">Emendas do Ciclo</h1>
+  <h1 class="text-3xl font-bold mb-6">Emendas do Ciclo {{ ciclo.nome }}</h1>
   <div class="grid grid-cols-2">
     {% comment %} Sidebar {% endcomment %}
     <div>
@@ -22,7 +22,7 @@
         </label>
         <label class="block">
           Tags:
-          <select name="tags" multiple="true">
+          <select name="tags" multiple>
             {% for tag_id, tag_nome in tags.items %}<option value="{{ tag_id }}">{{ tag_nome }}</option>{% endfor %}
           </select>
         </label>
@@ -30,6 +30,7 @@
           Ocultar financiados
           <input type="checkbox" name="ocultar-financiados">
         </label>
+        {% comment %} <button class="block" type="submit">Filtrar</button> {% endcomment %}
       </form>
     </div>
     {% if emendas %}
@@ -99,9 +100,9 @@
                         <button type="submit">Confirmar</button>
                       </form>
                     </div>
-                    {% endif %}
-                  {% endwith %}
+                  {% endif %}
                 {% endwith %}
+              {% endwith %}
               <a href="#"
                  class="inline-block w-full text-center bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">
                 Ver detalhes
