@@ -4,7 +4,7 @@
   <form action=""
         method="post"
         hx-get=""
-        hx-trigger="keyup changed debounce:2s"
+        hx-trigger="keyup changed delay:1s"
         hx-swap="innerHTML"
         hx-target="#previa-resultados-massa"
         hx-select="#previa-resultados-massa">
@@ -19,11 +19,14 @@
       </ul>
     {% endif %}
     {% if objetos %}
-      <p>{{ objetos|length }} linha{{ objetos|length|pluralize }} processadas corretamente.</p>
+    <h3>Prévia</h3>
+      {% comment %} <p>{{ objetos|length }} linha{{ objetos|length|pluralize }} processadas corretamente.</p> {% endcomment %}
       <table>
         <thead>
           <tr>
-            <th><span class="sr-only">Índice</span></th>
+            <th>
+              <span class="sr-only">Índice</span>
+            </th>
             <th>Título</th>
             <th>Descrição</th>
             <th>Valor</th>
