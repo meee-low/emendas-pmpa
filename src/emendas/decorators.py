@@ -8,6 +8,7 @@ from functools import wraps
 P = ParamSpec("P")
 R = TypeVar("R", bound=HttpResponse)
 
+
 def group_required(group_name: str):
     def decorator(view_func: Callable[P, R]) -> Callable[P, R]:
         @wraps(view_func)
@@ -22,9 +23,13 @@ def group_required(group_name: str):
             if not user.is_authenticated:
                 return redirect("login")  # type: ignore
 
-            if not user.groups.filter(name=str(group_name)).exists():
+            if not (
+                user.is_superuser or user.groups.filter(name=str(group_name)).exists()
+            ):
                 raise PermissionDenied
 
             return view_func(*args, **kwargs)
+
         return _wrapped_view
+
     return decorator

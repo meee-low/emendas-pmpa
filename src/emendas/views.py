@@ -1,12 +1,23 @@
+import csv
+from pprint import pprint
+from types import CellType
 import typing
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpRequest, HttpResponse
 from django.db.models import Sum, Prefetch
 from django.contrib.auth.models import User
+from django.urls import is_valid_path
 
 from emendas.decorators import group_required
+from emendas.forms import EmendasBulkForm
 from emendas.groups import GrupoDeUsuario, get_grupos_do_usuario
-from emendas.models import Ciclo, ParlamentarDoCiclo, PropostaDeEmendaDoCiclo, Tag
+from emendas.models import (
+    Ciclo,
+    ParlamentarDoCiclo,
+    PropostaDeEmenda,
+    PropostaDeEmendaDoCiclo,
+    Tag,
+)
 
 
 def home_page(request: HttpRequest) -> HttpResponse:
@@ -101,6 +112,36 @@ def catalogo_de_emendas(request: HttpRequest, ciclo_nome: str) -> HttpResponse:
     )
 
 
+def emendas(request: HttpRequest) -> HttpResponse:
+    class EmendaComCiclos(typing.TypedDict):
+        emenda: PropostaDeEmenda
+        tags: list[Tag]
+        ciclos: list[Ciclo]
+
+    emendas_queryset = PropostaDeEmenda.objects.all().prefetch_related(
+        Prefetch(
+            "propostadeemendadociclo_set",
+            queryset=PropostaDeEmendaDoCiclo.objects.select_related("ciclo"),
+        ),
+        Prefetch("tags", queryset=Tag.objects.all()),
+    )
+
+    emendas: list[EmendaComCiclos] = [
+        EmendaComCiclos(
+            emenda=emenda,
+            tags=list(emenda.tags.all()),
+            ciclos=[pc.ciclo.nome for pc in emenda.propostadeemendadociclo_set.all()],
+        )
+        for emenda in emendas_queryset
+    ]
+
+    return render(
+        request,
+        "emendas/emendas.html",
+        {"emendas": emendas, "grupos_do_user": get_grupos_do_usuario(request.user)},
+    )
+
+
 def emenda_do_ciclo(request: HttpRequest, emenda_sqid: str) -> HttpResponse:
     emenda = get_object_or_404(PropostaDeEmendaDoCiclo, sqid=emenda_sqid)
     return render(
@@ -108,6 +149,78 @@ def emenda_do_ciclo(request: HttpRequest, emenda_sqid: str) -> HttpResponse:
         "emendas/emenda_do_ciclo.html",
         {"emenda": emenda},
     )
+
+
+@group_required(GrupoDeUsuario.GESTAO)
+def adicionar_emenda_bulk(request: HttpRequest) -> HttpResponse:
+    def processar_form(texto: str) -> tuple[list[PropostaDeEmenda], list[str]]:
+        try:
+            linhas = bulk_processar_excel(texto)
+        except Exception as e:
+            return [], [f"{e}"]
+        objetos: list[PropostaDeEmenda] = []
+        erros: list[str] = []
+        for i, linha in enumerate(linhas, start=1):
+            if len(linha) != 3:
+                erros.append(
+                    f"Linha {i}: Número de colunas incompatível. Encontradas {len(linha)} colunas."
+                )
+                continue
+            titulo, descricao, valor = linha
+            try:
+                emenda = PropostaDeEmenda(
+                    titulo=titulo, descricao=descricao, valor=int(valor), ativo=True
+                )
+                objetos.append(emenda)
+            except Exception as e:
+                erros.append(
+                    f"Linha {i}: Erro ao transformar dados em Proposta de Emenda: {e}"
+                )
+        return objetos, erros
+
+    erros: list[str] = []
+    if request.method == "POST":
+        form = EmendasBulkForm(request.POST)
+        if form.is_valid():
+            texto = form.cleaned_data["texto"]
+            objetos, erros = processar_form(texto)
+            if not erros:
+                PropostaDeEmenda.objects.bulk_create(objetos)
+                return redirect("emendas")
+        return render(
+            request, "emendas/adicionar_em_massa.html", {"form": form, "erros": erros}
+        )
+
+    elif request.method == "GET":
+        params = request.GET
+        # pprint(params)
+        objetos = []
+        if params and "HX-Request" in request.headers:  # HTMX Update
+            form = EmendasBulkForm(params)
+            if form.is_valid():
+                texto = form.cleaned_data["texto"]
+                objetos, erros = processar_form(texto)
+        else:
+            form = EmendasBulkForm()
+        return render(
+            request,
+            "emendas/adicionar_em_massa.html",
+            {"form": form, "objetos": objetos, "erros": erros},
+        )
+    else:
+        return HttpResponse(status=405)
+
+
+def bulk_processar_excel(texto: str) -> list[list[str]]:
+    dialect = csv.Sniffer().sniff(texto, delimiters="|\t;,")
+    reader = csv.reader(texto.splitlines(), dialect)
+
+    linhas: list[list[str]] = []
+    for row in reader:
+        if not any(row):
+            continue
+        linhas.append([cell.strip() for cell in row])
+    return linhas
 
 
 @group_required(GrupoDeUsuario.PARLAMENTAR)

@@ -6,7 +6,9 @@
     <meta name="description" content="O Portal Leela." />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>
-      {% block title %}Emendas SMS-PA{% endblock %}
+      {% block title %}
+        Emendas SMS-PA
+      {% endblock title %}
     </title>
     <link rel="stylesheet" href={% static 'css/style.css' %}>
     <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js"
@@ -42,6 +44,9 @@
               </a>
             </li>
             <li>
+              <a class="hover:underline" href="{% url 'emendas' %}">Emendas</a>
+            </li>
+            <li>
               <a class="hover:underline" href="{% url 'catalogos' %}">Catálogo de Emendas</a>
             </li>
           </ul>
@@ -54,7 +59,8 @@
               <button type="submit">Sair</button>
             </form>
           {% else %}
-            <a class="hover:underline" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">Login</a>
+            <a class="hover:underline"
+               href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">Login</a>
           {% endif %}
         </div>
       </div>

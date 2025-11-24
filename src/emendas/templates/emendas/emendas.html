@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Todas as Emendas:</h1>
+  {% if "Gestão" in grupos_do_user or request.user.is_superuser %}
+    <div>
+      <h2>Gestão</h2>
+      {% comment %} TODO: Adicionar links para as páginas de gestão quando existirem {% endcomment %}
+      <div>Nova Proposta de Emenda</div>
+      <div>Adicionar Proposta de Emenda em Massa</div>
+    </div>
+  {% endif %}
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Descrição</th>
+        <th>Tags</th>
+        <th>Ciclos</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in emendas %}
+        {% comment %} TODO: adicionar links para editar e visualizar as emendas {% endcomment %}
+        <tr>
+          {% with emenda=item.emenda %}
+            <td>{{ emenda.titulo }}</td>
+            <td>{{ emenda.descricao }}</td>
+          {% endwith %}
+          <td>{{ item.tags|join:", " }}</td>
+          <td>{{ item.ciclos|join:", " }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock content %}

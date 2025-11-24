@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Adicionar Emendas em Massa</h1>
+  <form action=""
+        method="post"
+        hx-get=""
+        hx-trigger="keyup changed debounce:2s"
+        hx-swap="innerHTML"
+        hx-target="#previa-resultados-massa"
+        hx-select="#previa-resultados-massa">
+    {% csrf_token %} {{ form.as_p }}
+  </form>
+  <button type="submit">Enviar</button>
+  <div id="previa-resultados-massa">
+    {% if erros %}
+      Erros:
+      <ul>
+        {% for erro in erros %}<li>{{ erro }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+    {% if objetos %}
+      <p>{{ objetos|length }} linha{{ objetos|length|pluralize }} processadas corretamente.</p>
+      <table>
+        <thead>
+          <tr>
+            <th><span class="sr-only">Índice</span></th>
+            <th>Título</th>
+            <th>Descrição</th>
+            <th>Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for obj in objetos %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ obj.titulo }}</td>
+              <td>{{ obj.descricao }}</td>
+              <td>{{ obj.valor }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+{% endblock content %}
