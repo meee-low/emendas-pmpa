@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load num_br %}
+{% block content %}
+  <h1>Todas as Emendas:</h1>
+  {% if "Gestão" in grupos_do_user or request.user.is_superuser %}
+    <div>
+      <h2>Gestão</h2>
+      {% comment %} TODO: Adicionar links para as páginas de gestão quando existirem {% endcomment %}
+      <div>
+        <i class="fa-solid fa-square-plus"></i>Nova Parlamentar
+      </div>
+      <a class="hover:underline" href="#"><i class="fa-solid fa-square-plus"></i>Adicionar Parlamentares em Massa</a>
+    </div>
+  {% endif %}
+  {% if "Gestão" in grupos_do_user or request.user.is_superuser %}
+    <form>
+      {% csrf_token %}
+    {% endif %}
+    <table>
+      <thead>
+        <tr>
+          {% if "Gestão" in grupos_do_user or request.user.is_superuser %}
+            <th>
+              <span class="sr-only">Select</span>
+            </th>
+          {% endif %}
+          <th>Usuário</th>
+          <th>Nome</th>
+          <th>E-mail</th>
+          <th>Ciclo</th>
+          <th>Verba Inicial no Ciclo</th>
+          <th>Investido no Ciclo</th>
+          <th>Verba Restante no Ciclo</th>
+          {% if "Gestão" in grupos_do_user or request.user.is_superuser %}
+            <th>
+              <span class="sr-only">Ações</span>
+            </th>
+          {% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in parlamentares %}
+          {% comment %} TODO: adicionar links para editar e visualizar as emendas {% endcomment %}
+          <tr>
+            {% if "Gestão" in grupos_do_user or request.user.is_superuser %}
+              <td>
+                <input type="checkbox" name="selected:{{ emenda.sqid }}">
+              </td>
+            {% endif %}
+            <td>{{ item.usuario.username }}</td>
+            <td>{{ item.usuario.first_name }} {{ item.usuario.last_name }}</td>
+            <td>{{ item.usuario.email }}</td>
+            <td>{{ item.ciclo.nome }}</td>
+            <td>R$ {{ item.verba_inicial|num_br:0 }}</td>
+            <td>R$ {{ item.total_investido|num_br:0 }}</td>
+            <td>R$ {{ item.saldo_restante|num_br:0 }}</td>
+            {% if "Gestão" in grupos_do_user or request.user.is_superuser %}
+              {% comment %} TODO: Fazer esses botões funcionarem {% endcomment %}
+              <td>
+                <button>Deletar</button>
+                <button>Editar</button>
+                <button>Resetar Senha</button>
+              </td>
+            {% endif %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if "Gestão" in grupos_do_user or request.user.is_superuser %}</form>{% endif %}
+{% endblock content %}

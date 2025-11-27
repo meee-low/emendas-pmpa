@@ -6,6 +6,7 @@ from .views import (
     home_page,
     catalogos,
     emendas,
+    parlamentares,
     transacoes_do_parlamentar,
 )
 
@@ -38,4 +39,10 @@ urlpatterns = [
         transacoes_do_parlamentar,
         name="transacoes_do_user",
     ),
+    path(
+        "parlamentares/",
+        parlamentares,
+        name="lista_de_parlamentares"
+
+    )
 ]

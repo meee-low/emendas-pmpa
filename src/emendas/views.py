@@ -1,12 +1,13 @@
 import csv
 from http import HTTPStatus
-from pprint import pprint
 import typing
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import Http404, HttpRequest, HttpResponse
-from django.db.models import Sum, Prefetch
+from django.http import HttpRequest, HttpResponse
+from django.db.models import Sum, Prefetch, F
+from django.db.models.functions import Coalesce
 from django.contrib.auth.models import User
 from django.views.decorators.http import require_POST, require_GET
+
 
 from emendas.decorators import group_required
 from emendas.domain import investir
@@ -317,12 +318,33 @@ def transacoes_do_parlamentar(
             .first()
         )
         if p is None:
-            # TODO: 404
-            pass
+            return HttpResponse(status=HTTPStatus.NOT_FOUND)
         alvo = p.usuario
 
     return render(
         request,
         "emendas/lista_de_transacoes.html",
         {"transacoes": transacoes, "alvo": alvo},
+    )
+
+
+def parlamentares(request: HttpRequest) -> HttpResponse:
+    parlamentares = (
+        ParlamentarDoCiclo.objects.select_related("usuario", "ciclo")
+        .annotate(
+            total_investido=Coalesce(
+                Sum(
+                    "transacoes__valor_investido",
+                ),
+                0,
+            ),
+            saldo_restante=F("verba_inicial")
+            - Coalesce(Sum("transacoes__valor_investido"), 0),
+        )
+        .order_by("-ciclo__data_comeco", "usuario__username")
+    )
+    return render(
+        request,
+        "emendas/parlamentares/lista_de_parlamentares.html",
+        {"parlamentares": parlamentares},
     )
