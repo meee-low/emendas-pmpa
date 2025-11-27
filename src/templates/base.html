@@ -49,6 +49,9 @@
             <li>
               <a class="hover:underline" href="{% url 'catalogos' %}">Catálogo de Emendas</a>
             </li>
+            <li>
+              <a class="hover:underline" href="{% url 'meus_investimentos' %}">Meus Investimentos</a>
+            </li>
           </ul>
         </nav>
         <div>
@@ -68,11 +71,13 @@
     <div class="flex flex-row flex-1">
       <main class="bg-white md:m-6 p-4 md:p-6 w-full overflow-x-hidden overflow-y-auto"
             id="main">
-        {% block content %}{% endblock %}
+        {% block content %}
+        {% endblock content %}
       </main>
     </div>
     <footer>
-      {% block footer %}{% endblock %}
+      {% block footer %}
+      {% endblock footer %}
     </footer>
     <script>
       document.body.addEventListener("htmx:configRequest", function (evt) {
@@ -93,6 +98,6 @@
       });
     </script>
     {% block scripts %}
-    {% endblock %}
+    {% endblock scripts %}
   </body>
 </html>

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load num_br %}
+{% block content %}
+  <h2>Transações de {{ alvo }}</h2>
+  {% if transacoes %}
+    <table>
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>ID</th>
+          <th>Ciclo</th>
+          <th>Emenda</th>
+          <th>Tipo</th>
+          <th>Valor Investido</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in transacoes %}
+          <tr>
+            <td>{{ t.timestamp|date:"Y/m/d - h:i:s (e)" }}</td>
+            <td class="font-mono">{{ t.id }}</td>
+            <td>{{ t.ciclo }}</td>
+            <td>{{ t.emenda.proposta_de_emenda }}</td>
+            <td>{{ t.get_tipo_display }}</td>
+            <td>R$ {{ t.valor_investido|num_br:0 }}</td>
+            <td>{% comment %} TODO: Adicionar botao de cancelar a transacao {% endcomment %}</td>
+          </tr>
+        </tbody>
+      {% endfor %}
+    </table>
+  {% else %}
+    Esse parlamentar ainda não fez nenhum investimento.
+  {% endif %}
+{% endblock content %}

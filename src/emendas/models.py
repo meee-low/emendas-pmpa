@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import QuerySet
 from django.template.defaultfilters import slugify
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
@@ -85,6 +86,9 @@ class PropostaDeEmendaDoCiclo(models.Model):
 
         return total
 
+    def valor_restante(self) -> int:
+        return self.proposta_de_emenda.valor - self.total_ja_investido()
+
     def __str__(self) -> str:
         return f"Emenda {self.proposta_de_emenda_id} ({self.ciclo})"
 
@@ -124,6 +128,10 @@ class ParlamentarDoCiclo(models.Model):
 
 
 class Transacao(models.Model):
+    class Tipo(models.TextChoices):
+        INVESTIMENTO = "INVESTIMENTO", "Investimento"
+        CANCELAMENTO = "CANCELAMENTO", "Cancelamento"
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     emenda = models.ForeignKey(
         PropostaDeEmendaDoCiclo, on_delete=models.PROTECT, related_name="transacoes"
@@ -138,7 +146,18 @@ class Transacao(models.Model):
     )
     ciclo_id: int
     valor_investido = models.IntegerField()  # Pode ser negativo
-    tipo = models.CharField(max_length=20, blank=False)
+    tipo = models.CharField(
+        max_length=20, blank=False, choices=Tipo.choices, default=Tipo.INVESTIMENTO
+    )
+    transacao_cancelada: "ForeignKey[Self | None]" = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="cancelamentos",
+        help_text="Se esta for uma transação de cancelamento, aponta para a transação original.",
+    )
+    cancelamentos: "QuerySet[Self]"
     obs = models.TextField(blank=True, verbose_name="Observação")
     timestamp = models.DateTimeField(auto_now_add=True)
 

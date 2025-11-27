@@ -6,6 +6,7 @@ from .views import (
     home_page,
     catalogos,
     emendas,
+    transacoes_do_parlamentar,
 )
 
 urlpatterns = [
@@ -17,9 +18,24 @@ urlpatterns = [
         name="emendas_adicionar_em_massa",
     ),
     path(
-        "emendas/catalogo/<ciclo_nome>",
+        "emendas/catalogos/<ciclo_nome>",
         catalogo_de_emendas,
         name="catalogo_de_emendas_do_ciclo",
     ),
-    path("emendas/catalogo/", catalogos, name="catalogos"),
+    path("emendas/catalogos/", catalogos, name="catalogos"),
+    path(
+        "investimentos/parlamentar/<int:parlamentar_id>",
+        transacoes_do_parlamentar,
+        name="transacoes_do_parlamentar",
+    ),
+    path(
+        "investimentos/",
+        transacoes_do_parlamentar,
+        name="meus_investimentos",
+    ),
+    path(
+        "investimentos/user/<int:user_id>",
+        transacoes_do_parlamentar,
+        name="transacoes_do_user",
+    ),
 ]

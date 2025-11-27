@@ -1,14 +1,15 @@
 import csv
+from http import HTTPStatus
 from pprint import pprint
-from types import CellType
 import typing
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpRequest, HttpResponse
+from django.http import Http404, HttpRequest, HttpResponse
 from django.db.models import Sum, Prefetch
 from django.contrib.auth.models import User
-from django.urls import is_valid_path
+from django.views.decorators.http import require_POST, require_GET
 
 from emendas.decorators import group_required
+from emendas.domain import investir
 from emendas.forms import EmendasBulkForm
 from emendas.groups import GrupoDeUsuario, get_grupos_do_usuario
 from emendas.models import (
@@ -17,6 +18,7 @@ from emendas.models import (
     PropostaDeEmenda,
     PropostaDeEmendaDoCiclo,
     Tag,
+    Transacao,
 )
 
 
@@ -224,18 +226,31 @@ def bulk_processar_excel(texto: str) -> list[list[str]]:
 
 
 @group_required(GrupoDeUsuario.PARLAMENTAR)
+@require_POST
 def investir_em_emenda(request: HttpRequest, emenda_sqid: str) -> HttpResponse:
     emenda = get_object_or_404(PropostaDeEmendaDoCiclo, sqid=emenda_sqid)
-    raise NotImplementedError
+
+    parlamentar = ParlamentarDoCiclo.objects.filter(
+        ciclo_id=emenda.ciclo_id, usuario=request.user
+    ).first()
+    if parlamentar is None:
+        return HttpResponse(status=HTTPStatus.FORBIDDEN)
+
+    try:
+        quantia = int(request.POST.get("quantia", 0))
+        if quantia <= 0:
+            return HttpResponse(status=HTTPStatus.BAD_REQUEST)
+    except Exception as _e:
+        return HttpResponse(status=HTTPStatus.BAD_REQUEST)
+    try:
+        _transacao = investir(emenda, parlamentar, quantia)
+    except ValueError as _e:
+        return HttpResponse(status=HTTPStatus.UNPROCESSABLE_ENTITY)
+    return HttpResponse(status=HTTPStatus.CREATED)
 
 
 @group_required(GrupoDeUsuario.GESTAO)
 def adicionar_emenda(request: HttpRequest) -> HttpResponse:
-    raise NotImplementedError
-
-
-@group_required(GrupoDeUsuario.GESTAO)
-def adicionar_emendas(request: HttpRequest) -> HttpResponse:
     raise NotImplementedError
 
 
@@ -259,3 +274,55 @@ def ver_parlamentar(request: HttpRequest, id: int) -> HttpResponse:
 @group_required(GrupoDeUsuario.GESTAO)
 def adicionar_gestor(request: HttpRequest) -> HttpResponse:
     raise NotImplementedError
+
+
+@require_GET
+def transacoes_do_parlamentar(
+    request: HttpRequest, parlamentar_id: int | None = None, user_id: int | None = None
+) -> HttpResponse:
+    if parlamentar_id is None:
+        if user_id is None:
+            user = request.user
+            if not user.is_authenticated:
+                return HttpResponse(status=404)
+        else:
+            user = get_object_or_404(User, id=user_id)
+    else:
+        user = None
+
+    qs = Transacao.objects.select_related(
+        "parlamentar",
+        "parlamentar__usuario",
+        "emenda",
+        "emenda__ciclo",
+        "emenda__proposta_de_emenda",
+        "ciclo",
+    )
+
+    if parlamentar_id:
+        qs = qs.filter(parlamentar_id=parlamentar_id)
+    else:
+        qs = qs.filter(parlamentar__usuario=user)
+
+    transacoes = list(qs)
+
+    if user:
+        alvo = user
+    elif transacoes:
+        alvo = transacoes[0].parlamentar.usuario
+    else:
+        p = (
+            ParlamentarDoCiclo.objects.select_related("usuario")
+            .filter(id=parlamentar_id)
+            .first()
+        )
+        if p is None:
+            # TODO: 404
+            pass
+        alvo = p.usuario
+
+    return render(
+        request,
+        "emendas/lista_de_transacoes.html",
+        {"transacoes": transacoes, "alvo": alvo},
+    )
