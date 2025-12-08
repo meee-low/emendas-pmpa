@@ -1,7 +1,5 @@
 from datetime import datetime, timedelta
-from multiprocessing import Value
 from emendas.models import ParlamentarDoCiclo, PropostaDeEmendaDoCiclo, Transacao
-from django.contrib.auth.models import User
 from django.db.models import Sum
 from enum import StrEnum, auto
 
