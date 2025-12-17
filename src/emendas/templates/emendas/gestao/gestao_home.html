@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load num_br %}
+{% block content %}
+  <div>
+    <form hx-get="" hx-on="change" action="" method="get">
+      {% csrf_token %}
+      <select name="ciclo">
+        {% for ciclo in ciclos %}
+          <option value="{{ ciclo.id }}"
+                  {% if ciclo.id == ciclo_selecionado_id %}selected{% endif %}>
+            {{ ciclo.nome }} ({{ ciclo.data_comeco }} - {{ ciclo.data_fim }})
+          </option>
+        {% endfor %}
+      </select>
+    </form>
+    <a href="{% url "novo_ciclo" %}">Criar novo ciclo</a>
+  </div>
+  <div>
+    <div>
+      <h3>Opções de Emendas</h3>
+      <p>{{ emendas|length }} opções de emendas registradas neste ciclo.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Título</th>
+            <th>Valor</th>
+            <th>Tags</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in emendas %}
+            {% with item.emenda as emenda %}
+              {% with emenda.proposta_de_emenda as e %}
+                <tr>
+                  <td>{{ emenda.titulo }}</td>
+                  <td>R$ {{ emenda.valor|num_br }}</td>
+                  <td>{{ item.tags|join:", " }}</td>
+                </tr>
+              {% endwith %}
+            {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+      <a href="{% url "emendas" %}">Ver todas as emendas</a>
+    </div>
+    <div>
+      <h3>Parlamentares</h3>
+      <p>{{ parlamentares|length }} parlamentares registrados neste ciclo.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>E-mail</th>
+            <th>Esfera</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for parlamentar in parlamentares %}
+            <tr>
+              <td>{{ parlamentar.usuario.username }}</td>
+              <td>{{ parlamentar.usuario.email }}</td>
+              <td>{{ parlamentar.get_esfera_display }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <a href="{% url "lista_de_parlamentares" %}">Ver todos os parlamentares</a>
+    </div>
+    <div>
+      <h3>Transações Recentes</h3>
+      <p>{{ transacoes|length }} transações neste ciclo.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Emenda</th>
+            <th>Parlamentar</th>
+            <th>Valor</th>
+            <th>Tipo</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for transacao in transacoes %}
+            <tr>
+              <td>{{ transacao.id }}</td>
+              <td>{{ transacao.emenda.proposta_de_emenda.titulo }}</td>
+              <td>{{ transacao.parlamentar.usuario.username }}</td>
+              <td>R$ {{ transacao.valor_investido|num_br }}</td>
+              <td>{{ transacao.get_tipo_display }}</td>
+              <td>{{ transacao.timestamp }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <a href="{% url "transacoes_do_ciclo" %}">Ver todas as transações</a>
+    </div>
+  </div>
+{% endblock content %}

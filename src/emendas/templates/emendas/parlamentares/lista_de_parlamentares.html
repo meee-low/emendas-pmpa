@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% load num_br %}
 {% block content %}
-  <h1>Todas as Emendas:</h1>
+  <h1>Parlamentares por Ciclo:</h1>
   {% if "Gestão" in grupos_do_user or request.user.is_superuser %}
-    <div>
+    <div class="border w-fit">
       <h2>Gestão</h2>
       {% comment %} TODO: Adicionar links para as páginas de gestão quando existirem {% endcomment %}
       <div>
-        <i class="fa-solid fa-square-plus"></i>Nova Parlamentar
+        <i class="fa-solid fa-square-plus"></i>Novo Parlamentar
       </div>
-      <a class="hover:underline" href="#"><i class="fa-solid fa-square-plus"></i>Adicionar Parlamentares em Massa</a>
+      <a class="hover:underline" href="{% url "parlamentares_adicionar_em_massa" %}"><i class="fa-solid fa-square-plus"></i>Adicionar Parlamentares em Massa</a>
     </div>
   {% endif %}
   {% if "Gestão" in grupos_do_user or request.user.is_superuser %}
@@ -57,9 +57,9 @@
             {% if "Gestão" in grupos_do_user or request.user.is_superuser %}
               {% comment %} TODO: Fazer esses botões funcionarem {% endcomment %}
               <td>
-                <button>Deletar</button>
-                <button>Editar</button>
-                <button>Resetar Senha</button>
+                <button type="button">Deletar</button>
+                <button type="button">Editar</button>
+                <button type="button">Resetar Senha</button>
               </td>
             {% endif %}
           </tr>

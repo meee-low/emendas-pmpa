@@ -164,6 +164,7 @@ dependencies = [
     { name = "django-debug-toolbar" },
     { name = "django-hijack" },
     { name = "django-sqids" },
+    { name = "uuid6" },
 ]
 
 [package.dev-dependencies]
@@ -184,6 +185,7 @@ requires-dist = [
     { name = "django-debug-toolbar", specifier = ">=6.1.0" },
     { name = "django-hijack", specifier = ">=3.7.4" },
     { name = "django-sqids", specifier = ">=0.2.2" },
+    { name = "uuid6", specifier = ">=2025.0.1" },
 ]
 
 [package.metadata.requires-dev]
@@ -416,4 +418,12 @@ version = "2025.2"
 source = { registry = "../../../Downloads/python-wheels" }
 wheels = [
     { path = "tzdata-2025.2-py2.py3-none-any.whl" },
+]
+
+[[package]]
+name = "uuid6"
+version = "2025.0.1"
+source = { registry = "../../../Downloads/python-wheels" }
+wheels = [
+    { path = "uuid6-2025.0.1-py3-none-any.whl" },
 ]

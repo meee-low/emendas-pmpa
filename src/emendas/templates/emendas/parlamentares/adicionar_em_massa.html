@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Adicionar Parlamentares em Massa</h1>
+  <form action=""
+        method="post"
+        hx-get=""
+        hx-trigger="keyup changed delay:1s"
+        hx-swap="innerHTML"
+        hx-target="#previa-resultados-massa"
+        hx-select="#previa-resultados-massa">
+    {% csrf_token %} {{ form.as_p }}
+  </form>
+  <button type="submit">Enviar</button>
+  <div id="previa-resultados-massa">
+    {% if erros %}
+      Erros:
+      <ol>
+        {% for erro in erros %}<li>{{ erro }}</li>{% endfor %}
+      </ol>
+    {% endif %}
+    {% if objetos %}
+      <h3>Prévia</h3>
+      {% comment %} <p>{{ objetos|length }} linha{{ objetos|length|pluralize }} processadas corretamente.</p> {% endcomment %}
+      <table>
+        <thead>
+          <tr>
+            <th>
+              <span class="sr-only">Índice</span>
+            </th>
+            <th>Usuário</th>
+            <th>E-mail</th>
+            <th>Esfera</th>
+            <th>Ciclo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for obj, ciclo in objetos %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ obj.usuario.username }}</td>
+              <td>{{ obj.usuario.email }}</td>
+              <td>{{ obj.esfera }}</td>
+              <td>{{ ciclo }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+{% endblock content %}

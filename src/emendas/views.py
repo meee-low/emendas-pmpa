@@ -11,7 +11,7 @@ from django.views.decorators.http import require_POST, require_GET
 
 from emendas.decorators import group_required
 from emendas.domain import investir
-from emendas.forms import EmendasBulkForm
+from emendas.forms import EmendasBulkForm, ParlamentaresBulkForm
 from emendas.groups import GrupoDeUsuario, get_grupos_do_usuario
 from emendas.models import (
     Ciclo,
@@ -32,7 +32,7 @@ def home_page(request: HttpRequest) -> HttpResponse:
 
     # usuário está autenticado
     if GrupoDeUsuario.GESTAO in grupos_do_user or user.is_superuser:
-        return redirect("gestao_home")
+        return gestao_home(request)
 
     if GrupoDeUsuario.PARLAMENTAR in grupos_do_user:
         return redirect("parlamentar_dashboard")
@@ -40,14 +40,72 @@ def home_page(request: HttpRequest) -> HttpResponse:
     return render(request, "home/default_home.html")
 
 
+@require_GET
 @group_required(GrupoDeUsuario.GESTAO)
 def gestao_home(request: HttpRequest) -> HttpResponse:
-    return render(request, "gestao/gestao_home.html")
+    ciclos = list(Ciclo.objects.order_by("-data_comeco", "-data_fim"))
+    if len(ciclos) == 0:
+        return render(
+            request,
+            "emendas/gestao/gestao_home.html",
+        )
+    ciclo_id_str = request.GET.get("ciclo")
+    if not ciclo_id_str:
+        ciclo_id = ciclos[0].id
+    else:
+        ciclo_id = int(ciclo_id_str)
+
+    class EmendaComCiclos(typing.TypedDict):
+        emenda: PropostaDeEmenda
+        tags: list[Tag]
+
+    emendas_queryset = PropostaDeEmenda.objects.all().prefetch_related(
+        Prefetch(
+            "propostadeemendadociclo_set",
+            queryset=PropostaDeEmendaDoCiclo.objects.select_related("ciclo"),
+        ),
+        Prefetch("tags", queryset=Tag.objects.all()),
+    )
+
+    emendas: list[EmendaComCiclos] = [
+        EmendaComCiclos(
+            emenda=emenda,
+            tags=list(emenda.tags.all()),
+        )
+        for emenda in emendas_queryset
+    ]
+    parlamentares = ParlamentarDoCiclo.objects.filter(ciclo_id=ciclo_id).select_related(
+        "usuario"
+    )
+    transacoes = Transacao.objects.filter(ciclo_id=ciclo_id).select_related(
+        "parlamentar",
+        "parlamentar__usuario",
+        "emenda",
+        # "emenda__ciclo",
+        "emenda__proposta_de_emenda",
+        "ciclo",
+    ).order_by("-timestamp")
+
+    return render(
+        request,
+        "emendas/gestao/gestao_home.html",
+        {
+            "ciclo_selecionado_id": ciclo_id,
+            "ciclos": ciclos,
+            "emendas": emendas,
+            "parlamentares": parlamentares,
+            "transacoes": transacoes,
+        },
+    )
 
 
 @group_required(GrupoDeUsuario.PARLAMENTAR)
 def parlamentar_dashboard(request: HttpRequest) -> HttpResponse:
     return render(request, "parlamentar/parlamentar_dashboard.html")
+
+
+def em_construcao(request: HttpRequest) -> HttpResponse:
+    return render(request, "em_construcao.html")
 
 
 def catalogos(request: HttpRequest) -> HttpResponse:
@@ -348,3 +406,90 @@ def parlamentares(request: HttpRequest) -> HttpResponse:
         "emendas/parlamentares/lista_de_parlamentares.html",
         {"parlamentares": parlamentares},
     )
+
+
+@group_required(GrupoDeUsuario.GESTAO)
+def adicionar_parlamentar_bulk(request: HttpRequest) -> HttpResponse:
+    def processar_form(
+        texto: str,
+    ) -> tuple[list[tuple[ParlamentarDoCiclo, str]], list[str]]:
+        try:
+            linhas = bulk_processar_excel(texto)
+        except Exception as e:
+            return [], [f"{e}"]
+        objetos: list[tuple[ParlamentarDoCiclo, str]] = []
+        erros: list[str] = []
+        for i, linha in enumerate(linhas, start=1):
+            if len(linha) != 4:
+                erros.append(
+                    f"Linha {i}: Número de colunas incompatível. Encontradas {len(linha)} colunas."
+                )
+                continue
+            username, email, esfera, ciclo = linha
+            try:
+                user = User(
+                    username=username,
+                    password="",  # TODO: senha aleatória
+                    email=email,
+                )
+                esfera_dict = {
+                    "federal": ParlamentarDoCiclo.Esfera.FEDERAL,
+                    "estadual": ParlamentarDoCiclo.Esfera.ESTADUAL,
+                    "municipal": ParlamentarDoCiclo.Esfera.MUNICIPAL,
+                }
+                parlamentar = ParlamentarDoCiclo(
+                    usuario=user, esfera=esfera_dict[esfera.strip().lower()]
+                )
+                objetos.append((parlamentar, ciclo))
+            except Exception as e:
+                erros.append(f"Linha {i}: Erro ao ler os dados colados: {e}")
+        return objetos, erros
+
+    erros: list[str] = []
+    if request.method == "POST":
+        form = ParlamentaresBulkForm(request.POST)
+        if form.is_valid():
+            texto = form.cleaned_data["texto"]
+            objetos, erros = processar_form(texto)
+            if not erros:
+                ciclos = Ciclo.objects.filter(nome__in=[c for _, c in objetos])
+                mapa_ciclos = {c.nome: c for c in ciclos}
+                for i, (parlamentar, nome_ciclo) in enumerate(objetos):
+                    # TODO: error checking
+                    try:
+                        ciclo = mapa_ciclos[nome_ciclo]
+                        user = parlamentar.usuario
+                        user.save()
+                        parlamentar = ParlamentarDoCiclo(usuario=user, ciclo=ciclo)
+                        parlamentar.save()
+                    except KeyError:
+                        erros.append(
+                            f"Linha {i}: Ciclo com o nome {nome_ciclo} não encontrado."
+                        )
+
+                if not erros:
+                    return redirect("parlamentares")
+        return render(
+            request,
+            "emendas/parlamentares/adicionar_em_massa.html",
+            {"form": form, "erros": erros},
+        )
+
+    elif request.method == "GET":
+        params = request.GET
+        # pprint(params)
+        objetos = []
+        if params and "HX-Request" in request.headers:  # HTMX Update
+            form = ParlamentaresBulkForm(params)
+            if form.is_valid():
+                texto = form.cleaned_data["texto"]
+                objetos, erros = processar_form(texto)
+        else:
+            form = ParlamentaresBulkForm()
+        return render(
+            request,
+            "emendas/parlamentares/adicionar_em_massa.html",
+            {"form": form, "objetos": objetos, "erros": erros},
+        )
+    else:
+        return HttpResponse(status=405)

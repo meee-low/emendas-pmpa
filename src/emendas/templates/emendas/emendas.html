@@ -52,8 +52,8 @@
             {% if "Gestão" in grupos_do_user or request.user.is_superuser %}
               {% comment %} TODO: Fazer esses botões funcionarem {% endcomment %}
               <td>
-                <button>Deletar</button>
-                <button>Editar</button>
+                <button type="button">Deletar</button>
+                <button type="button">Editar</button>
               </td>
             {% endif %}
           </tr>

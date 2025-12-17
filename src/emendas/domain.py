@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta
-from emendas.models import ParlamentarDoCiclo, PropostaDeEmendaDoCiclo, Transacao
+from emendas.models import ParlamentarDoCiclo, PropostaDeEmendaDoCiclo, Transacao, Ciclo
 from django.db.models import Sum
 from enum import StrEnum, auto
+
+from django.contrib.auth.models import User
 
 
 def investir(
@@ -84,3 +86,7 @@ def cancelar_transacao(
         obs=obs,
     )
     return cancelamento
+
+
+def usuario_pertence_ao_ciclo(usuario: User, ciclo: Ciclo) -> bool:
+    return ParlamentarDoCiclo.objects.filter(ciclo=ciclo, usuario=usuario).exists()

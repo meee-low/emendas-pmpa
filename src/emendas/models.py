@@ -6,7 +6,7 @@ from django.core.validators import RegexValidator
 
 from django_sqids import SqidsField, shuffle_alphabet
 
-import uuid
+import uuid6
 
 import typing
 from typing import Self, override
@@ -99,11 +99,19 @@ class PropostaDeEmendaDoCiclo(models.Model):
 
 
 class ParlamentarDoCiclo(models.Model):
+    class Esfera(models.TextChoices):
+        FEDERAL = "FEDERAL", "Federal"
+        ESTADUAL = "ESTADUAL", "Estadual"
+        MUNICIPAL = "MUNICIPAL", "Municipal"
+
     usuario: "ForeignKey[User]" = models.ForeignKey(
         "auth.User", on_delete=models.CASCADE, verbose_name="Usuário"
     )
     ciclo = models.ForeignKey(Ciclo, on_delete=models.CASCADE)
     ciclo_id: int
+    esfera = models.CharField(
+        max_length=20, blank=False, choices=Esfera.choices
+    )
     verba_inicial = models.PositiveIntegerField()
 
     def __str__(self):
@@ -132,7 +140,7 @@ class Transacao(models.Model):
         INVESTIMENTO = "INVESTIMENTO", "Investimento"
         CANCELAMENTO = "CANCELAMENTO", "Cancelamento"
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid6.uuid7, editable=False)
     emenda = models.ForeignKey(
         PropostaDeEmendaDoCiclo, on_delete=models.PROTECT, related_name="transacoes"
     )
