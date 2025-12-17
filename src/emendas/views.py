@@ -65,7 +65,7 @@ def gestao_home(request: HttpRequest) -> HttpResponse:
             queryset=PropostaDeEmendaDoCiclo.objects.select_related("ciclo"),
         ),
         Prefetch("tags", queryset=Tag.objects.all()),
-    )
+    ).filter(propostadeemendadociclo__ciclo_id=ciclo_id)
 
     emendas: list[EmendaComCiclos] = [
         EmendaComCiclos(

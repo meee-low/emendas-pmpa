@@ -2,8 +2,12 @@
 {% load num_br %}
 {% block content %}
   <div>
-    <form hx-get="" hx-target="#dashboard" hx-select="#dashboard" hx-trigger="change" action="" method="get">
-      {% csrf_token %}
+    <form hx-get=""
+          hx-target="#dashboard"
+          hx-select="#dashboard"
+          hx-trigger="change"
+          action=""
+          method="get">
       <select name="ciclo">
         {% for ciclo in ciclos %}
           <option value="{{ ciclo.id }}"
