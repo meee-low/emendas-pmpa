@@ -2,7 +2,7 @@
 {% load num_br %}
 {% block content %}
   <div>
-    <form hx-get="" hx-on="change" action="" method="get">
+    <form hx-get="" hx-target="#dashboard" hx-select="#dashboard" hx-trigger="change" action="" method="get">
       {% csrf_token %}
       <select name="ciclo">
         {% for ciclo in ciclos %}
@@ -15,7 +15,7 @@
     </form>
     <a href="{% url "novo_ciclo" %}">Criar novo ciclo</a>
   </div>
-  <div>
+  <div id="dashboard">
     <div>
       <h3>Opções de Emendas</h3>
       <p>{{ emendas|length }} opções de emendas registradas neste ciclo.</p>
