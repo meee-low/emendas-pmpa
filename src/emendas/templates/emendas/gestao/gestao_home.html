@@ -5,6 +5,7 @@
     <form hx-get=""
           hx-target="#dashboard"
           hx-select="#dashboard"
+          hx-swap="outerHTML"
           hx-trigger="change"
           action=""
           method="get">
@@ -19,7 +20,7 @@
     </form>
     <a href="{% url "novo_ciclo" %}">Criar novo ciclo</a>
   </div>
-  <div id="dashboard">
+  <div id="dashboard" class="mt-8 space-y-8">
     <div>
       <h3>Opções de Emendas</h3>
       <p>{{ emendas|length }} opções de emendas registradas neste ciclo.</p>
