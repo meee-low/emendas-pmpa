@@ -26,7 +26,7 @@
           <th>Nome</th>
           <th>Descrição</th>
           <th>Tags</th>
-          <th>Ciclos</th>
+          <th>Ciclo</th>
           {% if "Gestão" in grupos_do_user or request.user.is_superuser %}
             <th>
               <span class="sr-only">Ações</span>
@@ -35,7 +35,7 @@
         </tr>
       </thead>
       <tbody>
-        {% for item in emendas %}
+        {% for item in emendas_e_ciclos %}
           {% comment %} TODO: adicionar links para editar e visualizar as emendas {% endcomment %}
           <tr>
             {% with emenda=item.emenda %}
@@ -48,7 +48,7 @@
               <td>{{ emenda.descricao }}</td>
             {% endwith %}
             <td>{{ item.tags|join:", " }}</td>
-            <td>{{ item.ciclos|join:", " }}</td>
+            <td>{{ item.ciclo }}</td>
             {% if "Gestão" in grupos_do_user or request.user.is_superuser %}
               {% comment %} TODO: Fazer esses botões funcionarem {% endcomment %}
               <td>

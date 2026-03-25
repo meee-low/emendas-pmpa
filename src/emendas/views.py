@@ -17,7 +17,6 @@ from emendas.models import (
     Ciclo,
     ParlamentarDoCiclo,
     PropostaDeEmenda,
-    PropostaDeEmendaDoCiclo,
     Tag,
     Transacao,
 )
@@ -59,13 +58,9 @@ def gestao_home(request: HttpRequest) -> HttpResponse:
         emenda: PropostaDeEmenda
         tags: list[Tag]
 
-    emendas_queryset = PropostaDeEmenda.objects.all().prefetch_related(
-        Prefetch(
-            "propostadeemendadociclo_set",
-            queryset=PropostaDeEmendaDoCiclo.objects.select_related("ciclo"),
-        ),
-        Prefetch("tags", queryset=Tag.objects.all()),
-    ).filter(propostadeemendadociclo__ciclo_id=ciclo_id)
+    emendas_queryset = (
+        PropostaDeEmenda.objects.all().select_related("ciclo").filter(ciclo_id=ciclo_id)
+    )
 
     emendas: list[EmendaComCiclos] = [
         EmendaComCiclos(
@@ -74,17 +69,21 @@ def gestao_home(request: HttpRequest) -> HttpResponse:
         )
         for emenda in emendas_queryset
     ]
+
     parlamentares = ParlamentarDoCiclo.objects.filter(ciclo_id=ciclo_id).select_related(
         "usuario"
     )
-    transacoes = Transacao.objects.filter(ciclo_id=ciclo_id).select_related(
-        "parlamentar",
-        "parlamentar__usuario",
-        "emenda",
-        # "emenda__ciclo",
-        "emenda__proposta_de_emenda",
-        "ciclo",
-    ).order_by("-timestamp")
+
+    transacoes = (
+        Transacao.objects.filter(ciclo_id=ciclo_id)
+        .select_related(
+            "parlamentar",
+            "parlamentar__usuario",
+            "emenda",
+            "ciclo",
+        )
+        .order_by("-timestamp")
+    )
 
     return render(
         request,
@@ -136,20 +135,17 @@ def catalogos(request: HttpRequest) -> HttpResponse:
 def catalogo_de_emendas(request: HttpRequest, ciclo_nome: str) -> HttpResponse:
     ciclo = get_object_or_404(Ciclo, nome=ciclo_nome)
     emendas = (
-        PropostaDeEmendaDoCiclo.objects.filter(ciclo=ciclo)
-        .select_related("proposta_de_emenda", "ciclo")
-        .prefetch_related(
-            Prefetch("proposta_de_emenda__tags", queryset=Tag.objects.all())
-        )
+        PropostaDeEmenda.objects.filter(ciclo=ciclo)
+        .prefetch_related(Prefetch("tags", queryset=Tag.objects.all()))
         .annotate(total_investido=Sum("transacoes__valor_investido"))
     )
 
     tags = {
         tag_id: nome
         for tag_id, nome in (
-            emendas.values_list(
-                "proposta_de_emenda__tags__id", "proposta_de_emenda__tags__nome"
-            ).distinct()
+            emendas.values_list("tags__id", "tags__nome")
+            .distinct()
+            .order_by("tags__nome")
         )
     }
 
@@ -177,21 +173,21 @@ def emendas(request: HttpRequest) -> HttpResponse:
     class EmendaComCiclos(typing.TypedDict):
         emenda: PropostaDeEmenda
         tags: list[Tag]
-        ciclos: list[Ciclo]
+        ciclo: Ciclo
 
-    emendas_queryset = PropostaDeEmenda.objects.all().prefetch_related(
-        Prefetch(
-            "propostadeemendadociclo_set",
-            queryset=PropostaDeEmendaDoCiclo.objects.select_related("ciclo"),
-        ),
-        Prefetch("tags", queryset=Tag.objects.all()),
+    emendas_queryset = (
+        PropostaDeEmenda.objects.all()
+        .select_related("ciclo")
+        .prefetch_related(
+            Prefetch("tags", queryset=Tag.objects.all()),
+        )
     )
 
     emendas: list[EmendaComCiclos] = [
         EmendaComCiclos(
             emenda=emenda,
             tags=list(emenda.tags.all()),
-            ciclos=[pc.ciclo.nome for pc in emenda.propostadeemendadociclo_set.all()],
+            ciclo=emenda.ciclo,
         )
         for emenda in emendas_queryset
     ]
@@ -199,12 +195,12 @@ def emendas(request: HttpRequest) -> HttpResponse:
     return render(
         request,
         "emendas/emendas.html",
-        {"emendas": emendas, "grupos_do_user": get_grupos_do_usuario(request.user)},
+        {"emendas_e_ciclos": emendas, "grupos_do_user": get_grupos_do_usuario(request.user)},
     )
 
 
 def emenda_do_ciclo(request: HttpRequest, emenda_sqid: str) -> HttpResponse:
-    emenda = get_object_or_404(PropostaDeEmendaDoCiclo, sqid=emenda_sqid)
+    emenda = get_object_or_404(PropostaDeEmenda, sqid=emenda_sqid)
     return render(
         request,
         "emendas/emenda_do_ciclo.html",
@@ -287,7 +283,7 @@ def bulk_processar_excel(texto: str) -> list[list[str]]:
 @group_required(GrupoDeUsuario.PARLAMENTAR)
 @require_POST
 def investir_em_emenda(request: HttpRequest, emenda_sqid: str) -> HttpResponse:
-    emenda = get_object_or_404(PropostaDeEmendaDoCiclo, sqid=emenda_sqid)
+    emenda = get_object_or_404(PropostaDeEmenda, sqid=emenda_sqid)
 
     parlamentar = ParlamentarDoCiclo.objects.filter(
         ciclo_id=emenda.ciclo_id, usuario=request.user
@@ -354,7 +350,6 @@ def transacoes_do_parlamentar(
         "parlamentar__usuario",
         "emenda",
         "emenda__ciclo",
-        "emenda__proposta_de_emenda",
         "ciclo",
     )
 

@@ -1,3 +1,4 @@
+from opcode import hasarg
 from django.db import models
 from django.db.models import QuerySet
 from django.template.defaultfilters import slugify
@@ -35,7 +36,12 @@ class Ciclo(models.Model):
 
 class PropostaDeEmenda(models.Model):
     _SLUG_LEN = 50
+
     sqid = SqidsField(alphabet=shuffle_alphabet(seed="PropostaDeEmenda"))
+
+    ciclo = models.ForeignKey(Ciclo, on_delete=models.CASCADE)
+    ciclo_id: int
+
     titulo = models.CharField(max_length=200, unique=True, verbose_name="Título")
     slug = models.SlugField(
         max_length=_SLUG_LEN, unique=True, blank=True, editable=False
@@ -43,9 +49,15 @@ class PropostaDeEmenda(models.Model):
     descricao = models.TextField(verbose_name="Descrição")
     valor = models.PositiveIntegerField()
     ativo = models.BooleanField(default=True)
+    permite_parcial = models.BooleanField(
+        default=False,
+        verbose_name="Permite Investimentos Parciais",
+        help_text="Se marcado, investimentos menores que o valor total são executáveis.",
+    )
     tags: "ManyToManyField[Tag, Self]" = models.ManyToManyField(
         "Tag", blank=True, related_name="emendas"
     )
+
     data_criacao = models.DateTimeField(
         auto_now_add=True, verbose_name="Data de Criação"
     )
@@ -58,20 +70,13 @@ class PropostaDeEmenda(models.Model):
 
     @override
     def save(self, *args, **kwargs):  # pyright: ignore[reportMissingParameterType, reportUnknownParameterType]
-        self.slug = slugify(f"{self.sqid}-{slugify(self.titulo)}")[: self._SLUG_LEN]
+        self.slug = f"{self.sqid}-{slugify(self.titulo)}"[: self._SLUG_LEN]
         super().save(*args, **kwargs)  # pyright: ignore[reportUnknownArgumentType]
 
     class Meta:
         verbose_name = "Proposta de Emenda"
         verbose_name_plural = "Propostas de Emendas"
-
-
-class PropostaDeEmendaDoCiclo(models.Model):
-    sqid = SqidsField(alphabet=shuffle_alphabet(seed="PropostaDeEmendaDoCiclo"))
-    proposta_de_emenda = models.ForeignKey(PropostaDeEmenda, on_delete=models.CASCADE)
-    proposta_de_emenda_id: int
-    ciclo = models.ForeignKey(Ciclo, on_delete=models.CASCADE)
-    ciclo_id: int
+        unique_together = ["ciclo", "titulo"]
 
     def total_ja_investido(self) -> int:
         if hasattr(self, "total_investido"):
@@ -87,15 +92,7 @@ class PropostaDeEmendaDoCiclo(models.Model):
         return total
 
     def valor_restante(self) -> int:
-        return self.proposta_de_emenda.valor - self.total_ja_investido()
-
-    def __str__(self) -> str:
-        return f"Emenda {self.proposta_de_emenda_id} ({self.ciclo})"
-
-    class Meta:
-        verbose_name = "Proposta de Emenda do Ciclo"
-        verbose_name_plural = "Propostas de Emendas do Ciclo"
-        unique_together = ["proposta_de_emenda", "ciclo"]
+        return self.valor - self.total_ja_investido()
 
 
 class ParlamentarDoCiclo(models.Model):
@@ -109,15 +106,25 @@ class ParlamentarDoCiclo(models.Model):
     )
     ciclo = models.ForeignKey(Ciclo, on_delete=models.CASCADE)
     ciclo_id: int
-    esfera = models.CharField(
-        max_length=20, blank=False, choices=Esfera.choices
-    )
+    esfera = models.CharField(max_length=20, blank=False, choices=Esfera.choices)
     verba_inicial = models.PositiveIntegerField()
 
     def __str__(self):
         return f"{self.usuario} ({self.ciclo})"
 
     def saldo_verba(self) -> int:
+        if hasattr(self, "saldo"):
+            return self.saldo or 0  # type: ignore
+        if hasattr(self, "total_investido"):
+            return self.verba_inicial - (self.total_investido or 0)  # type: ignore
+        if hasattr(self, "transacoes"):
+            total_investido = int(
+                self.transacoes.aggregate(models.Sum("valor_investido"))[
+                    "valor_investido__sum"
+                ]
+                or 0
+            )
+            return self.verba_inicial - total_investido
         total_investido = int(
             Transacao.objects.filter(
                 parlamentar=self, ciclo_id=self.ciclo_id
@@ -142,7 +149,7 @@ class Transacao(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid6.uuid7, editable=False)
     emenda = models.ForeignKey(
-        PropostaDeEmendaDoCiclo, on_delete=models.PROTECT, related_name="transacoes"
+        PropostaDeEmenda, on_delete=models.PROTECT, related_name="transacoes"
     )
     emenda_id: int
     parlamentar = models.ForeignKey(

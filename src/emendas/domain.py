@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from emendas.models import ParlamentarDoCiclo, PropostaDeEmendaDoCiclo, Transacao, Ciclo
+from emendas.models import ParlamentarDoCiclo, PropostaDeEmenda, Transacao, Ciclo
 from django.db.models import Sum
 from enum import StrEnum, auto
 
@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 
 
 def investir(
-    emenda: PropostaDeEmendaDoCiclo, parlamentar: ParlamentarDoCiclo, quantia: int
+    emenda: PropostaDeEmenda, parlamentar: ParlamentarDoCiclo, quantia: int
 ) -> Transacao:
     if emenda.ciclo_id != parlamentar.ciclo_id:
         raise ValueError("Parlamentar não pertence a esse ciclo de emendas")
