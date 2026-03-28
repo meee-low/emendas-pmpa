@@ -1,0 +1,4 @@
+uv.lock
+
+# Apenas para a fase de desenvolvimento, para facilitar
+# desenvolvimento em mais de um computador. Ativar novamente o .lock quando terminar.
