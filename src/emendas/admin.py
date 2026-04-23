@@ -7,3 +7,4 @@ admin.site.register(Tag)
 admin.site.register(ParlamentarDoCiclo)
 admin.site.register(Transacao)
 admin.site.register(Ciclo)
+

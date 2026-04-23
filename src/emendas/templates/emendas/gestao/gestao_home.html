@@ -17,6 +17,13 @@
           </option>
         {% endfor %}
       </select>
+      <button type="submit">Selecionar</button>
+<!-- button to delete ciclo using the selected element in the form: -->
+      <button
+        hx-delete=""
+        type="button">
+        Deletar
+      </button>
     </form>
     <a href="{% url "novo_ciclo" %}">Criar novo ciclo</a>
   </div>

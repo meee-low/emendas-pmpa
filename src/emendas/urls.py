@@ -1,15 +1,17 @@
-from django.urls import path, include
+from django.urls import path
 
 from .views import (
     adicionar_emenda_bulk,
+    adicionar_parlamentar_bulk,
     catalogo_de_emendas,
-    em_construcao,
-    home_page,
     catalogos,
+    em_construcao,
     emendas,
+    ciclo_view,
+    home_page,
+    novo_ciclo,
     parlamentares,
     transacoes_do_parlamentar,
-    adicionar_parlamentar_bulk
 )
 
 urlpatterns = [
@@ -37,34 +39,21 @@ urlpatterns = [
         name="meus_investimentos",
     ),
     path(
-        "investimentos/ciclo/<int:ciclo_id>",
-        em_construcao,
-        name="transacoes_do_ciclo"
+        "investimentos/ciclo/<int:ciclo_id>", em_construcao, name="transacoes_do_ciclo"
     ),
     path(
         "investimentos/user/<int:user_id>",
         transacoes_do_parlamentar,
         name="transacoes_do_user",
     ),
-    path(
-        "parlamentares/",
-        parlamentares,
-        name="lista_de_parlamentares"
-
-    ),
+    path("parlamentares/", parlamentares, name="lista_de_parlamentares"),
     path(
         "parlamentares/adicionar_em_massa",
         adicionar_parlamentar_bulk,
         name="parlamentares_adicionar_em_massa",
     ),
-    path(
-        "novo_ciclo",
-        em_construcao,
-        name="novo_ciclo"
-    ),
-    path(
-        "transacoes_do_ciclo",
-        em_construcao,
-        name="transacoes_do_ciclo"
-    ),
+    path("ciclo/novo", novo_ciclo, name="novo_ciclo"),
+    path("ciclo/<str:ciclo_slug>", ciclo_view, name="visao_ciclo"),
+    path("transacoes_do_ciclo", em_construcao, name="transacoes_do_ciclo"),
+    path("", ciclo_view, name="gestao_home"),
 ]

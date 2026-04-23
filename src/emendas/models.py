@@ -1,4 +1,3 @@
-from opcode import hasarg
 from django.db import models
 from django.db.models import QuerySet
 from django.template.defaultfilters import slugify
@@ -23,12 +22,27 @@ validador_alfanumerico = RegexValidator(
 
 
 class Ciclo(models.Model):
+    _SLUG_LEN = 50
     id: int
+
+    sqid = SqidsField(alphabet=shuffle_alphabet(seed="Ciclo"))
+
     nome = models.CharField(max_length=20, unique=True)
     data_comeco = models.DateField(verbose_name="Data do Começo")
     data_fim = models.DateField(verbose_name="Data do Fim")
     ativo = models.BooleanField()
     criado_em = models.DateTimeField(auto_now_add=True)
+
+    slug = models.SlugField(
+        max_length=_SLUG_LEN, unique=True, blank=True, editable=False
+    )
+
+    @override
+    def save(self, *args, **kwargs):  # pyright: ignore[reportMissingParameterType, reportUnknownParameterType]
+        if not self.id:
+            super().save(*args, **kwargs)
+        self.slug = f"{self.sqid}-{slugify(self.nome)}"[: self._SLUG_LEN]
+        super().save()
 
     def __str__(self) -> str:
         return self.nome
@@ -70,6 +84,8 @@ class PropostaDeEmenda(models.Model):
 
     @override
     def save(self, *args, **kwargs):  # pyright: ignore[reportMissingParameterType, reportUnknownParameterType]
+        if not self.id:
+            super().save(*args, **kwargs)
         self.slug = f"{self.sqid}-{slugify(self.titulo)}"[: self._SLUG_LEN]
         super().save(*args, **kwargs)  # pyright: ignore[reportUnknownArgumentType]
 

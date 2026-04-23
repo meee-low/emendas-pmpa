@@ -6,12 +6,12 @@ from django.http import HttpRequest, HttpResponse
 from django.db.models import Sum, Prefetch, F
 from django.db.models.functions import Coalesce
 from django.contrib.auth.models import User
-from django.views.decorators.http import require_POST, require_GET
+from django.views.decorators.http import require_POST, require_GET, require_http_methods
 
 
 from emendas.decorators import group_required
 from emendas.domain import investir
-from emendas.forms import EmendasBulkForm, ParlamentaresBulkForm
+from emendas.forms import CicloForm, EmendasBulkForm, ParlamentaresBulkForm
 from emendas.groups import GrupoDeUsuario, get_grupos_do_usuario
 from emendas.models import (
     Ciclo,
@@ -31,7 +31,7 @@ def home_page(request: HttpRequest) -> HttpResponse:
 
     # usuário está autenticado
     if GrupoDeUsuario.GESTAO in grupos_do_user or user.is_superuser:
-        return gestao_home(request)
+        return ciclo_view(request)
 
     if GrupoDeUsuario.PARLAMENTAR in grupos_do_user:
         return redirect("parlamentar_dashboard")
@@ -39,20 +39,30 @@ def home_page(request: HttpRequest) -> HttpResponse:
     return render(request, "home/default_home.html")
 
 
-@require_GET
+@require_http_methods(["GET", "DELETE"])
 @group_required(GrupoDeUsuario.GESTAO)
-def gestao_home(request: HttpRequest) -> HttpResponse:
+def ciclo_view(request: HttpRequest, ciclo_slug: str | None = None) -> HttpResponse:
+    if request.method == "DELETE":
+        deletar_ciclo(request, ciclo_slug)
+
     ciclos = list(Ciclo.objects.order_by("-data_comeco", "-data_fim"))
-    if len(ciclos) == 0:
-        return render(
-            request,
-            "emendas/gestao/gestao_home.html",
-        )
-    ciclo_id_str = request.GET.get("ciclo")
-    if not ciclo_id_str:
-        ciclo_id = ciclos[0].id
+
+    if ciclo_slug is not None:
+        try:
+            ciclo_id = Ciclo.objects.get(slug=ciclo_slug).id
+        except Ciclo.DoesNotExist:
+            redirect("gestao_home")
     else:
-        ciclo_id = int(ciclo_id_str)
+        if len(ciclos) == 0:
+            return render(
+                request,
+                "emendas/gestao/gestao_home.html",
+            )
+        ciclo_id_str = request.GET.get("ciclo")
+        if not ciclo_id_str:
+            ciclo_id = ciclos[0].id
+        else:
+            ciclo_id = int(ciclo_id_str)
 
     class EmendaComCiclos(typing.TypedDict):
         emenda: PropostaDeEmenda
@@ -96,6 +106,13 @@ def gestao_home(request: HttpRequest) -> HttpResponse:
             "transacoes": transacoes,
         },
     )
+
+
+@group_required(GrupoDeUsuario.GESTAO)
+def deletar_ciclo(request: HttpRequest, ciclo_slug: str) -> HttpResponse:
+    ciclo = get_object_or_404(Ciclo, slug=ciclo_slug)
+    ciclo.delete()
+    return None
 
 
 @group_required(GrupoDeUsuario.PARLAMENTAR)
@@ -195,7 +212,10 @@ def emendas(request: HttpRequest) -> HttpResponse:
     return render(
         request,
         "emendas/emendas.html",
-        {"emendas_e_ciclos": emendas, "grupos_do_user": get_grupos_do_usuario(request.user)},
+        {
+            "emendas_e_ciclos": emendas,
+            "grupos_do_user": get_grupos_do_usuario(request.user),
+        },
     )
 
 
@@ -488,3 +508,14 @@ def adicionar_parlamentar_bulk(request: HttpRequest) -> HttpResponse:
         )
     else:
         return HttpResponse(status=405)
+
+
+@group_required(GrupoDeUsuario.GESTAO)
+def novo_ciclo(request: HttpRequest) -> HttpResponse:
+    form = CicloForm()
+    if request.method == "POST":
+        form = CicloForm(request.POST)
+        if form.is_valid():
+            ciclo = form.save()
+            return redirect("visao_ciclo", ciclo.slug)
+    return render(request, "emendas/ciclo/novo_ciclo.html", {"form": form})
